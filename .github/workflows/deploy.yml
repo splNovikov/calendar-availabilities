@@ -13,23 +13,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
-      - name: Install clasp
-        run: npm install -g @google/clasp
-
-      - name: Configure GCP Credentials
-        env:
-          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      - name: Write OAuth JSON
         run: |
-          echo "$GCP_CREDENTIALS" > gcp-key.json
-          # Экспорт пути к ключу для Google библиотеки
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/gcp-key.json" >> $GITHUB_ENV
-          # Аутентификация сервисного аккаунта в gcloud (необязательно для clasp)
-          gcloud auth activate-service-account --key-file=gcp-key.json
-          gcloud config set project calendar-availabilities-473113
+          echo "${{ secrets.CLASP_OAUTH_JSON }}" > oauth.json
+
+      - name: Login to clasp (headless)
+        run: npx --yes @google/clasp login --no-localhost --creds ./oauth.json
 
       - name: Create .clasp.json
         run: |
@@ -41,4 +34,4 @@ jobs:
           EOF
 
       - name: Push to Apps Script
-        run: clasp push --force
+        run: npx --yes @google/clasp push --force
