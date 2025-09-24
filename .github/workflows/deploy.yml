@@ -23,9 +23,11 @@ jobs:
       - name: Decode Service Account Key
         run: |
           echo "${{ secrets.CLASP_SA_KEY }}" | base64 --decode > $HOME/sa-key.json
-        # Expose path for Application Default Credentials
-      - name: Set ADC environment variable
-        run: echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/sa-key.json" >> $GITHUB_ENV
+
+      - name: Authenticate with Service Account
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/sa-key.json
+        run: clasp login --service-account $HOME/sa-key.json
 
       - name: Create .clasp.json
         run: |
