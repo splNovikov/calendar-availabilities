@@ -31,8 +31,22 @@ jobs:
           # Validate JSON to fail fast with a clear error
           jq -e . oauth.json > /dev/null
 
-      - name: Login to clasp (headless)
-        run: npx --yes @google/clasp login --no-localhost --creds ./oauth.json
+      - name: Seed clasprc from secret (preferred)
+        if: ${{ secrets.CLASP_RC_JSON != '' }}
+        run: |
+          mkdir -p "$HOME"
+          printf '%s' "${{ secrets.CLASP_RC_JSON }}" | tr -d '\r' > $HOME/.clasprc.json
+          jq -e . $HOME/.clasprc.json > /dev/null
+          echo "Seeded ~/.clasprc.json from secret."
+
+      - name: Verify clasprc exists
+        run: |
+          if [ ! -f "$HOME/.clasprc.json" ]; then
+            echo "~/.clasprc.json not found."
+            echo "Provide CLASP_RC_JSON secret (contents of your local ~/.clasprc.json) to enable non-interactive CI."
+            echo "Alternatively, re-enable 'clasp login' but it requires manual device auth and will fail in CI."
+            exit 1
+          fi
 
       - name: Create .clasp.json
         run: |
