@@ -9,7 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
@@ -20,8 +20,12 @@ jobs:
       - name: Install clasp
         run: npm install -g @google/clasp
 
-      - name: Create .clasprc.json from BASE64
-        run: echo "${{ secrets.CLASP_OAUTH_JSON }}" | base64 --decode > ~/.clasprc.json
+      - name: Decode Service Account Key
+        run: |
+          echo "${{ secrets.CLASP_SA_KEY }}" | base64 --decode > sa-key.json
+
+      - name: Authenticate with Service Account
+        run: clasp login --creds sa-key.json
 
       - name: Create .clasp.json
         run: |
