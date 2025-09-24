@@ -19,7 +19,10 @@ jobs:
 
       - name: Write OAuth JSON
         run: |
-          echo "${{ secrets.CLASP_OAUTH_JSON }}" > oauth.json
+          # Write secret exactly as-is, strip potential CR characters
+          printf '%s' "${{ secrets.CLASP_OAUTH_JSON }}" | tr -d '\r' > oauth.json
+          # Validate JSON to fail fast with a clear error
+          jq -e . oauth.json > /dev/null
 
       - name: Login to clasp (headless)
         run: npx --yes @google/clasp login --no-localhost --creds ./oauth.json
