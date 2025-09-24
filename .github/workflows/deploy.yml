@@ -12,16 +12,41 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
-      - name: Install clasp
-        run: npm install -g @google/clasp
+      - name: Write OAuth JSON
+        run: |
+          # Accept either raw JSON or base64-encoded JSON in CLASP_OAUTH_JSON
+          RAW_SECRET="${{ secrets.CLASP_OAUTH_JSON }}"
+          # Trim leading spaces/newlines for detection
+          FIRST_CHAR=$(printf '%s' "$RAW_SECRET" | tr -d '\r' | sed 's/^\s*//' | head -c 1)
+          if [ "$FIRST_CHAR" = "{" ]; then
+            printf '%s' "$RAW_SECRET" | tr -d '\r' > oauth.json
+          else
+            printf '%s' "$RAW_SECRET" | tr -d '\r' | base64 -d > oauth.json
+          fi
+          # Validate JSON to fail fast with a clear error
+          jq -e . oauth.json > /dev/null
 
-      - name: Create .clasprc.json from BASE64
-        run: echo "${{ secrets.CLASPRC_JSON_B64 }}" | base64 --decode > ~/.clasprc.json
+      - name: Seed clasprc from secret (preferred)
+        if: ${{ secrets.CLASP_RC_JSON != '' }}
+        run: |
+          mkdir -p "$HOME"
+          printf '%s' "${{ secrets.CLASP_RC_JSON }}" | tr -d '\r' > $HOME/.clasprc.json
+          jq -e . $HOME/.clasprc.json > /dev/null
+          echo "Seeded ~/.clasprc.json from secret."
+
+      - name: Verify clasprc exists
+        run: |
+          if [ ! -f "$HOME/.clasprc.json" ]; then
+            echo "~/.clasprc.json not found."
+            echo "Provide CLASP_RC_JSON secret (contents of your local ~/.clasprc.json) to enable non-interactive CI."
+            echo "Alternatively, re-enable 'clasp login' but it requires manual device auth and will fail in CI."
+            exit 1
+          fi
 
       - name: Create .clasp.json
         run: |
@@ -33,4 +58,4 @@ jobs:
           EOF
 
       - name: Push to Apps Script
-        run: clasp push --force
+        run: npx --yes @google/clasp push --force
