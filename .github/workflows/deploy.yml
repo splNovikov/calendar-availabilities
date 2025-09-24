@@ -28,15 +28,8 @@ jobs:
           gcloud auth activate-service-account --key-file=creds.json
           gcloud config set project calendar-availabilities-473113
 
-      - name: Login clasp with credentials
-        env:
-          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-        run: |
-          echo "$GCP_CREDENTIALS" > gcp-key.json
-          clasp login --creds gcp-key.json
-
       - name: Push to Apps Script
         env:
           CLASP_SCRIPT_ID: ${{ secrets.CLASP_SCRIPT_ID }}
         run: |
-          clasp push --force --script-id $CLASP_SCRIPT_ID
+          clasp push --force --script-id $CLASP_SCRIPT_ID --creds gcp-key.json
