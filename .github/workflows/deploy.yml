@@ -26,7 +26,7 @@ jobs:
         run: |
           echo "$GCP_CREDENTIALS" > creds.json
           gcloud auth activate-service-account --key-file=creds.json
-          gcloud config set project YOUR_GCP_PROJECT_ID
+          gcloud config set project calendar-availabilities-473113
 
       - name: Login clasp with credentials
         env:
