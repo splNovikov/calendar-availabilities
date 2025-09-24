@@ -19,8 +19,15 @@ jobs:
 
       - name: Write OAuth JSON
         run: |
-          # Write secret exactly as-is, strip potential CR characters
-          printf '%s' "${{ secrets.CLASP_OAUTH_JSON }}" | tr -d '\r' > oauth.json
+          # Accept either raw JSON or base64-encoded JSON in CLASP_OAUTH_JSON
+          RAW_SECRET="${{ secrets.CLASP_OAUTH_JSON }}"
+          # Trim leading spaces/newlines for detection
+          FIRST_CHAR=$(printf '%s' "$RAW_SECRET" | tr -d '\r' | sed 's/^\s*//' | head -c 1)
+          if [ "$FIRST_CHAR" = "{" ]; then
+            printf '%s' "$RAW_SECRET" | tr -d '\r' > oauth.json
+          else
+            printf '%s' "$RAW_SECRET" | tr -d '\r' | base64 -d > oauth.json
+          fi
           # Validate JSON to fail fast with a clear error
           jq -e . oauth.json > /dev/null
 
