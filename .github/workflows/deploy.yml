@@ -1,4 +1,4 @@
-name: Deploy Apps Script
+name: Deploy to Google Apps Script
 
 on:
   push:
@@ -8,26 +8,28 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write   # needed for Workload Identity if you choose that auth method
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          # Use one of these methods:
-          # 1. Service account JSON stored as a secret:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-          # 2. Or, use Workload Identity Federation:
-          # workload_identity_provider: projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
-          # service_account: my-sa@my-project.iam.gserviceaccount.com
+          node-version: '18'
 
-      - name: Deploy to Apps Script
-        uses: google-github-actions/deploy-apps-script@v0
-        with:
-          script_id: ${{ secrets.CLASP_SCRIPT_ID }}
-          # path to your Apps Script source, relative to repo root:
-          project: src
+      - name: Install clasp
+        run: npm install -g @google/clasp
+
+      - name: Create .clasprc.json from BASE64
+        run: echo "${{ secrets.CLASPRC_JSON_B64 }}" | base64 --decode > ~/.clasprc.json
+
+      - name: Create .clasp.json
+        run: |
+          echo '{
+            "scriptId": "${{ secrets.SCRIPT_ID }}",
+            "rootDir": "./src"
+          }' > .clasp.json
+
+      - name: Deploy with clasp
+        run: clasp push --force
