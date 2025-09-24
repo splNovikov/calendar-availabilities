@@ -24,11 +24,6 @@ jobs:
         run: |
           echo "${{ secrets.CLASP_SA_KEY }}" | base64 --decode > $HOME/sa-key.json
 
-      - name: Authenticate with Service Account
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: $HOME/sa-key.json
-        run: clasp login --service-account $HOME/sa-key.json
-
       - name: Create .clasp.json
         run: |
           cat <<EOF > .clasp.json
@@ -38,5 +33,7 @@ jobs:
           }
           EOF
 
-      - name: Push to Apps Script
+      - name: Push to Apps Script using ADC
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/sa-key.json
         run: clasp push --force
