@@ -24,8 +24,11 @@ jobs:
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          echo "$GCP_CREDENTIALS" > creds.json
-          gcloud auth activate-service-account --key-file=creds.json
+          echo "$GCP_CREDENTIALS" > gcp-key.json
+          # Экспорт пути к ключу для Google библиотеки
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/gcp-key.json" >> $GITHUB_ENV
+          # Аутентификация сервисного аккаунта в gcloud (необязательно для clasp)
+          gcloud auth activate-service-account --key-file=gcp-key.json
           gcloud config set project calendar-availabilities-473113
 
       - name: Create .clasp.json
@@ -38,4 +41,4 @@ jobs:
           EOF
 
       - name: Push to Apps Script
-        run: clasp push --force --creds gcp-key.json
+        run: clasp push --force
