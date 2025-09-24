@@ -111,7 +111,7 @@ function writeResultsToSheet(results, startTime, endTime) {
     // Записываем занятых
     results.busy.forEach(user => {
         sheet.getRange(row, 1, 1, 3).setValues([[
-            '❌ Занят', user, ''
+            '❌ Занят!', user, ''
         ]]);
         sheet.getRange(row, 1, 1, 3).setBackground('#fce8e6');
         row++;
